@@ -1,21 +1,55 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Button, StyleSheet, Text, View, TextInput } from 'react-native';
+import { Button, StyleSheet, Text, View, TextInput, Alert } from 'react-native';
+import axios from 'axios';
 
 export default function App() {
-  const [count, setCount] = useState(0);
   const [text, setText] = useState('');
+  const [address, setAddress] = useState(null);
 
-  const handlerSub = () => setCount(count - 1);
-  const handlerText = (text) => setText(text);
+  const valueChangeEvent = (text) => setText(text);
+  const searchAddress = () => {
+    if (text) {
+      axios.get(`https://viacep.com.br/ws/${text}/json/`)
+        .then(response => {
+          if (response.data.erro) {
+            Alert.alert('Erro', 'CEP não encontrado!');
+          } else {
+            setAddress(response.data);
+          }
+        })
+        .catch(() => {
+          Alert.alert('Erro', 'Não foi possível buscar o CEP!');
+        });
+    } else {
+      Alert.alert('Atenção', 'Digite um CEP válido!');
+    }
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.counterText}>Busca CEP:</Text>
       <View style={styles.buttonContainer}>
-        <TextInput style={styles.inputText} placeholder="Digite aqui..." onChangeText={handlerText}/>
-        <Button title="Buscar" onPress={handlerSub} />
+        <TextInput 
+          style={styles.inputText} 
+          placeholder="Digite aqui..." 
+          onChangeText={valueChangeEvent}
+          keyboardType="numeric"
+          value={text}
+        />
+        <Button title="Buscar" onPress={searchAddress} />
       </View>
+      {address && (
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultText}>CEP: {address.cep}</Text>
+          <Text style={styles.resultText}>Logradouro: {address.logradouro}</Text>
+          <Text style={styles.resultText}>Bairro: {address.bairro}</Text>
+          <Text style={styles.resultText}>Localidade: {address.localidade}</Text>
+          <Text style={styles.resultText}>UF: {address.uf}</Text>
+          <Text style={styles.resultText}>IBGE: {address.ibge}</Text>
+          <Text style={styles.resultText}>DDD: {address.ddd}</Text>
+        </View>
+      )}
       <StatusBar style="auto" />
     </View>
   );
@@ -45,5 +79,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
     padding: 10,
     width: '80%',
+  },
+  resultContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  resultText: {
+    fontSize: 18,
+    marginVertical: 2,
   },
 });
