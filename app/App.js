@@ -1,45 +1,45 @@
-import React, { useState } from 'react';
+import { Button, StyleSheet, Text, View, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Button, StyleSheet, Text, View, TextInput, Alert } from 'react-native';
+import React, { useState } from 'react';
 import axios from 'axios';
 
 export default function App() {
   const [text, setText] = useState('');
   const [address, setAddress] = useState(null);
+  const [isSearchMode, setIsSearchMode] = useState(true);
 
-  const valueChangeEvent = (text) => setText(text);
+  const handleTextChange = (text) => setText(text);
+
   const searchAddress = () => {
-    if (text) {
-      axios.get(`https://viacep.com.br/ws/${text}/json/`)
-        .then(response => {
-          if (response.data.erro) {
-            Alert.alert('Erro', 'CEP não encontrado!');
-          } else {
-            setAddress(response.data);
-          }
-        })
-        .catch(() => {
-          Alert.alert('Erro', 'Não foi possível buscar o CEP!');
-        });
-    } else {
-      Alert.alert('Atenção', 'Digite um CEP válido!');
-    }
+    axios.get(`https://viacep.com.br/ws/${text}/json/`)
+      .then(response => {
+        setAddress(response.data);
+        setIsSearchMode(false);
+      })
+  };
+
+  const handleNewSearch = () => {
+    setIsSearchMode(true);
+    setAddress(null);
+    setText('');
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.counterText}>Busca CEP:</Text>
-      <View style={styles.buttonContainer}>
-        <TextInput 
-          style={styles.inputText} 
-          placeholder="Digite aqui..." 
-          onChangeText={valueChangeEvent}
-          keyboardType="numeric"
-          value={text}
-        />
-        <Button title="Buscar" onPress={searchAddress} />
-      </View>
-      {address && (
+      <Text style={styles.headerText}>Busca CEP</Text>
+      <TextInput 
+        style={styles.inputText} 
+        placeholder="Digite aqui..." 
+        onChangeText={handleTextChange}
+        keyboardType="numeric"
+        value={text}
+        editable={isSearchMode}
+      />
+      <Button 
+        title={isSearchMode ? "Buscar" : "Nova Busca"} 
+        onPress={isSearchMode ? searchAddress : handleNewSearch} 
+      />
+      {address && !isSearchMode && (
         <View style={styles.resultContainer}>
           <Text style={styles.resultText}>CEP: {address.cep}</Text>
           <Text style={styles.resultText}>Logradouro: {address.logradouro}</Text>
@@ -63,29 +63,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  counterText: {
+  headerText: {
     fontSize: 24,
     marginBottom: 20,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '60%',
+    textAlign: 'center',
   },
   inputText: {
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
-    marginTop: 20,
-    padding: 10,
+    marginBottom: 20,
+    paddingHorizontal: 10,
     width: '80%',
+    borderRadius: 5,
+  },
+  button: {
+    marginTop: 10,
   },
   resultContainer: {
     marginTop: 20,
     alignItems: 'center',
+    width: '80%',
   },
   resultText: {
     fontSize: 18,
     marginVertical: 2,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    marginVertical: 10,
   },
 });
